@@ -139,7 +139,7 @@ public partial class SimpleAdvertisement : BasePlugin
     if (_rules.Count == 0) return;
     var rule = _rules[_currentIndex];
     _currentIndex = (_currentIndex + 1) % _rules.Count;
-    if (!string.IsNullOrWhiteSpace(rule.Chat)) Core.PlayerManager.SendChat(Helper.Colored(rule.Chat));
-    else if (!string.IsNullOrWhiteSpace(rule.CenterHtml)) Core.PlayerManager.SendCenterHTML(rule.CenterHtml, rule.Duration ?? DefaultCenterHtmlDuration);
+    if (!string.IsNullOrWhiteSpace(rule.Chat)) Core.PlayerManager.SendChatAsync(Helper.Colored(rule.Chat));
+    else if (!string.IsNullOrWhiteSpace(rule.CenterHtml)) Core.PlayerManager.SendCenterHTMLAsync(rule.CenterHtml, rule.Duration ?? DefaultCenterHtmlDuration);
   }
 }
