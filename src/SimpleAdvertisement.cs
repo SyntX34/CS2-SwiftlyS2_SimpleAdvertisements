@@ -44,6 +44,22 @@ public partial class SimpleAdvertisement : BasePlugin
     "  }\n" +
     "}\n";
 
+  private static readonly Dictionary<string, string> ColorCodes = new()
+  {
+    { "green", "\x04" },
+    { "red", "\x0F" },
+    { "blue", "\x0B" },
+    { "yellow", "\x0D" },
+    { "purple", "\x03" },
+    { "white", "\x01" },
+    { "default", "\x01" },
+    { "grey", "\x09" },
+    { "orange", "\x08" },
+    { "olive", "\x07" },
+    { "lightyellow", "\x05" },
+    { "darkred", "\x02" },
+  };
+
   private PluginConfig _config = new();
   private List<Advertisement> _rules = new();
   private int _currentIndex;
@@ -139,7 +155,14 @@ public partial class SimpleAdvertisement : BasePlugin
     if (_rules.Count == 0) return;
     var rule = _rules[_currentIndex];
     _currentIndex = (_currentIndex + 1) % _rules.Count;
-    if (!string.IsNullOrWhiteSpace(rule.Chat)) Core.PlayerManager.SendChatAsync(Helper.Colored(rule.Chat));
+    if (!string.IsNullOrWhiteSpace(rule.Chat)) Core.PlayerManager.SendChatAsync(ApplyColors(rule.Chat));
     else if (!string.IsNullOrWhiteSpace(rule.CenterHtml)) Core.PlayerManager.SendCenterHTMLAsync(rule.CenterHtml, rule.Duration ?? DefaultCenterHtmlDuration);
+  }
+
+  private static string ApplyColors(string message)
+  {
+    foreach (var code in ColorCodes)
+      message = message.Replace("{" + code.Key + "}", code.Value);
+    return message;
   }
 }
