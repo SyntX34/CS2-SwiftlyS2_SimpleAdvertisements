@@ -11,6 +11,8 @@ public class PluginConfig
   public bool Enabled { get; set; } = true;
   public float Interval { get; set; } = 60f;
   public bool ReloadOnMapChange { get; set; } = true;
+  public string Order { get; set; } = "forward";
+  public bool SkipDuplicate { get; set; } = true;
 }
 
 public class Advertisement
@@ -63,6 +65,7 @@ public partial class SimpleAdvertisement : BasePlugin
   private PluginConfig _config = new();
   private List<Advertisement> _rules = new();
   private int _currentIndex;
+  private int _lastIndex = -1;
   private CancellationTokenSource? _timer;
 
   public SimpleAdvertisement(ISwiftlyCore core) : base(core) {}
@@ -114,6 +117,7 @@ public partial class SimpleAdvertisement : BasePlugin
     StopAdvertisements();
     LoadAdvertisements();
     if (!_config.Enabled || _rules.Count == 0) return;
+    if (IsOrder("reverse")) _currentIndex = _rules.Count - 1;
     var interval = Math.Max(1f, _config.Interval);
     _timer = Core.Scheduler.DelayAndRepeatBySeconds(interval, interval, ShowNext);
     if (_config.ReloadOnMapChange) Core.Scheduler.StopOnMapChange(_timer);
@@ -125,6 +129,7 @@ public partial class SimpleAdvertisement : BasePlugin
     _timer?.Cancel();
     _timer = null;
     _currentIndex = 0;
+    _lastIndex = -1;
   }
 
   private void LoadAdvertisements()
@@ -153,11 +158,34 @@ public partial class SimpleAdvertisement : BasePlugin
   private void ShowNext()
   {
     if (_rules.Count == 0) return;
-    var rule = _rules[_currentIndex];
-    _currentIndex = (_currentIndex + 1) % _rules.Count;
+    var rule = _rules[PickIndex()];
     if (!string.IsNullOrWhiteSpace(rule.Chat)) Core.PlayerManager.SendChatAsync(ApplyColors(rule.Chat));
     else if (!string.IsNullOrWhiteSpace(rule.CenterHtml)) Core.PlayerManager.SendCenterHTMLAsync(rule.CenterHtml, rule.Duration ?? DefaultCenterHtmlDuration);
   }
+
+  private int PickIndex()
+  {
+    if (IsOrder("random"))
+    {
+      var index = Random.Shared.Next(_rules.Count);
+      if (_config.SkipDuplicate && _rules.Count > 1)
+        while (index == _lastIndex)
+          index = Random.Shared.Next(_rules.Count);
+      _lastIndex = index;
+      return index;
+    }
+    if (IsOrder("reverse"))
+    {
+      var index = _currentIndex;
+      _currentIndex = (_currentIndex - 1 + _rules.Count) % _rules.Count;
+      return index;
+    }
+    var forward = _currentIndex;
+    _currentIndex = (_currentIndex + 1) % _rules.Count;
+    return forward;
+  }
+
+  private bool IsOrder(string order) => string.Equals(_config.Order, order, StringComparison.OrdinalIgnoreCase);
 
   private static string ApplyColors(string message)
   {

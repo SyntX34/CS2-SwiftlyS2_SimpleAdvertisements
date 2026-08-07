@@ -34,7 +34,9 @@ The plugin configuration is stored at `addons/swiftly/configs/plugins/SimpleAdve
   "config": {
     "enabled": true,
     "interval": 60,
-    "reloadOnMapChange": true
+    "reloadOnMapChange": true,
+    "order": "forward",
+    "skipDuplicate": true
   }
 }
 ```
@@ -42,6 +44,8 @@ The plugin configuration is stored at `addons/swiftly/configs/plugins/SimpleAdve
 - `enabled` - enables or disables the plugin.
 - `interval` - seconds between each advertisement.
 - `reloadOnMapChange` - reloads `advertisements.jsonc` on every map change.
+- `order` - advertisement selection order. `"forward"` cycles from the first entry to the last, `"reverse"` cycles from the last to the first, and `"random"` picks a random entry each time.
+- `skipDuplicate` - only applies when `order` is `"random"`. When `true`, the same advertisement is never shown twice in a row. When `false`, repeats are allowed.
 
 ## Advertisements
 
