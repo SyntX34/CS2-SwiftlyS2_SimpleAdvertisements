@@ -21,16 +21,6 @@
     <PackageReference Include="SwiftlyS2.CS2" Version="*" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="resources/gamedata/**/*;resources/templates/**/*;resources/translations/**/*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="examples\**\*.cs" />
-  </ItemGroup>
-
   <Target Name="CreateZip" AfterTargets="Publish">
     <ItemGroup>
       <PublishFiles Include="$(PublishDir)**\*.*" />
