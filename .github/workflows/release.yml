@@ -1,0 +1,216 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version for this release (e.g. 1.0.0)"
+        required: true
+        type: string
+
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Get Version
+        id: version
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using version: $VERSION"
+
+      - name: ⚙️ Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+          cache: true
+          cache-dependency-path: "**/*.csproj"
+
+      - name: 🔨 Restore & Publish Projects
+        run: |
+          PROJECTS=$(grep -l "CreateZip" $(find . -name "*.csproj") 2>/dev/null || true)
+
+          if [ -z "$PROJECTS" ]; then
+            echo "::error::No projects with CreateZip target found."
+            exit 1
+          fi
+
+          echo "Projects:"
+          echo "$PROJECTS"
+
+          for PROJECT in $PROJECTS; do
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Building $PROJECT"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+            dotnet restore "$PROJECT"
+            dotnet publish "$PROJECT" -c Release
+          done
+
+      - name: 📦 Prepare Release Assets
+        id: assets
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          mkdir -p release-artifacts
+
+          ZIP_FILES=$(find . -name "*.zip" -type f)
+
+          if [ -z "$ZIP_FILES" ]; then
+            echo "::error::No ZIP files found."
+            exit 1
+          fi
+
+          echo "Found release artifacts:"
+          echo
+
+          for ZIP in $ZIP_FILES; do
+            NAME=$(basename "$ZIP" .zip)
+            NEW_NAME="${NAME}-v${VERSION}.zip"
+
+            echo "• $NEW_NAME"
+
+            mv "$ZIP" "release-artifacts/$NEW_NAME"
+          done
+
+      - name: 🏷️ Determine Release Tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          REPO="${{ github.event.repository.name }}"
+
+          BASE="v${VERSION}"
+          TAG="$BASE"
+          TITLE="${REPO} • ${BASE}"
+          BUILD=1
+
+          while gh release view "$TAG" >/dev/null 2>&1; do
+            BUILD=$((BUILD+1))
+            TAG="${BASE}-${BUILD}"
+            TITLE="${REPO} • ${BASE} #${BUILD}"
+          done
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: 📝 Generate Release Notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          REPO="${{ github.repository }}"
+
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+
+          {
+            echo "# 🚀 Release $VERSION"
+            echo
+
+            echo "> **Repository:** \`$REPO\`"
+            echo "> **Version:** \`$VERSION\`"
+            echo "> **Release Tag:** \`$TAG\`"
+            echo
+
+            echo "---"
+            echo
+
+            echo "## ✨ What's Changed"
+            echo
+
+            if [ -n "$PREV_TAG" ]; then
+              gh api repos/$REPO/compare/$PREV_TAG...HEAD \
+                --jq '.commits[] |
+                  "- \(.commit.message | split("\n")[0]) — **@" + (.author.login // .commit.author.name) + "**"'
+            else
+              gh api repos/$REPO/commits \
+                --paginate \
+                --jq '.[] |
+                  "- \(.commit.message | split("\n")[0]) — **@" + (.author.login // .commit.author.name) + "**"'
+            fi
+
+            echo
+            echo "---"
+            echo
+
+            echo "## ❤️ Contributors"
+            echo
+
+            if [ -n "$PREV_TAG" ]; then
+              gh api repos/$REPO/compare/$PREV_TAG...HEAD \
+                --jq '
+                  [.commits[]
+                  | (.author.login // .commit.author.name)]
+                  | unique[]
+                  | "- @" + .
+                '
+            else
+              gh api repos/$REPO/contributors \
+                --jq '.[] | "- @" + .login'
+            fi
+
+            echo
+            echo "---"
+            echo
+
+            echo "## 📦 Downloads"
+            echo
+
+            for FILE in release-artifacts/*.zip; do
+              echo "- $(basename "$FILE")"
+            done
+
+            if [ -n "$PREV_TAG" ]; then
+              echo
+              echo "---"
+              echo
+              echo "## 🔍 Full Changelog"
+              echo
+              echo "https://github.com/$REPO/compare/$PREV_TAG...$TAG"
+            fi
+
+          } > /tmp/release_notes.md
+
+          echo
+          echo "Generated Release Notes:"
+          cat /tmp/release_notes.md
+
+      - name: 🚀 Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+          TITLE="${{ steps.tag.outputs.title }}"
+
+          FLAGS=""
+
+          if [[ "$VERSION" == *-* ]]; then
+            FLAGS="--prerelease"
+          fi
+
+          gh release create "$TAG" \
+            --title "$TITLE" \
+            --notes-file /tmp/release_notes.md \
+            $FLAGS \
+            release-artifacts/*.zip
+
+          echo
+          echo "🎉 Release created successfully!"
+          echo "https://github.com/${{ github.repository }}/releases/tag/$TAG"
