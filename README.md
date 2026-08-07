@@ -1,14 +1,14 @@
 <div align="center">
   <img src="https://pan.samyyc.dev/s/VYmMXE" />
-  <h2><strong>SimpleAdvertisement</strong></h2>
+  <h2><strong><a href="https://github.com/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements">SimpleAdvertisement</a></strong></h2>
   <h3>A simple advertisements plugin for SwiftlyS2 CS2 servers.</h3>
 </div>
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status">
-  <img src="https://img.shields.io/github/downloads/SyntX34/SimpleAdvertisement/total" alt="Downloads">
-  <img src="https://img.shields.io/github/stars/SyntX34/SimpleAdvertisement?style=flat&logo=github" alt="Stars">
-  <img src="https://img.shields.io/github/license/SyntX34/SimpleAdvertisement" alt="License">
+  <img src="https://img.shields.io/github/downloads/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements/total" alt="Downloads">
+  <img src="https://img.shields.io/github/stars/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements?style=flat&logo=github" alt="Stars">
+  <img src="https://img.shields.io/github/license/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements" alt="License">
 </p>
 
 ## Features
