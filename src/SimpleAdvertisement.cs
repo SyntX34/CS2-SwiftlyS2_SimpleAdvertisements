@@ -1,13 +1,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SwiftlyS2.Shared;
+using SwiftlyS2.Shared.Commands;
 using SwiftlyS2.Shared.Events;
 using SwiftlyS2.Shared.Plugins;
 namespace SimpleAdvertisement;
 
 [PluginMetadata(
   Id = "SimpleAdvertisement", 
-  Version = "1.0.0", 
+  Version = "1.1.0", 
   Name = "SimpleAdvertisement", 
   Author = "SyntX34", 
   Description = "A simple advertisements plugin for SwiftlyS2 CS2 servers."
@@ -71,6 +72,13 @@ public partial class SimpleAdvertisement : BasePlugin
   private void OnMapLoad(IOnMapLoadEvent @event)
   {
     if (_config.ReloadOnMapChange) StartAdvertisements();
+  }
+
+  [Command("reloadadvertisement", permission: "z", helpText: "Reloads the advertisements file.")]
+  public void ReloadAdvertisementCommand(ICommandContext context)
+  {
+    StartAdvertisements();
+    context.Reply(_rules.Count == 0 ? "No advertisements loaded." : "Advertisements reloaded.");
   }
 
   private PluginConfig LoadConfig()

@@ -17,6 +17,7 @@
 - Center HTML advertisements
 - Configurable advertisement interval
 - Optional advertisement reload on map change
+- Admin command to reload advertisements on demand
 
 ## Installation
 
@@ -63,6 +64,10 @@ The advertisements file is stored at `addons/swiftly/configs/plugins/SimpleAdver
 - `centerhtml` - an HTML message displayed in the center of the screen. Color tags are not supported here.
 - `duration` - optional display time in milliseconds for `centerhtml` rules, defaults to 10000.
 
+## Commands
+
+- `sw_reloadadvertisement` - reloads `advertisements.jsonc` and restarts the advertisement loop. Requires the `z` (root) flag in `addons/swiftly/configs/permissions.jsonc`. Can also be executed from the server console.
+
 ## Supported Colors
 
 `chat` messages support the following color tags:
@@ -80,3 +85,7 @@ The SwiftlyS2 framework also supports `{default}`, `{grey}`, `{orange}`, `{olive
 
 - Use the `dotnet publish -c Release` command to build and package the plugin.
 - The output DLL is placed in the `build/` directory and a zip file is created for distribution.
+
+
+## LICENSE
+SimpleAdvertisements is released under the MIT License. You can use it, change it and share it on your own server. The one thing you must keep is the copyright notice with the original author name. See the LICENSE file for the full text.
