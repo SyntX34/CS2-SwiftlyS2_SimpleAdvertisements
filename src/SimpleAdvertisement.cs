@@ -6,14 +6,6 @@ using SwiftlyS2.Shared.Events;
 using SwiftlyS2.Shared.Plugins;
 namespace SimpleAdvertisement;
 
-[PluginMetadata(
-  Id = "SimpleAdvertisement", 
-  Version = "1.1.0", 
-  Name = "SimpleAdvertisement", 
-  Author = "SyntX34", 
-  Description = "A simple advertisements plugin for SwiftlyS2 CS2 servers."
-)]
-
 public class PluginConfig
 {
   public bool Enabled { get; set; } = true;
@@ -28,6 +20,13 @@ public class Advertisement
   public int? Duration { get; set; }
 }
 
+[PluginMetadata(
+  Id = "SimpleAdvertisement", 
+  Version = "1.1.1", 
+  Name = "SimpleAdvertisement", 
+  Author = "SyntX34", 
+  Description = "A simple advertisements plugin for SwiftlyS2 CS2 servers."
+)]
 public partial class SimpleAdvertisement : BasePlugin
 {
   private const string ConfigFile = "config.jsonc";
