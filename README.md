@@ -6,9 +6,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status">
-  <img src="https://img.shields.io/github/downloads/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements/total" alt="Downloads">
-  <img src="https://img.shields.io/github/stars/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements?style=flat&logo=github" alt="Stars">
-  <img src="https://img.shields.io/github/license/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements" alt="License">
+  <img src="https://img.shields.io/github/downloads/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements/total?label=downloads" alt="Downloads">
+  <img src="https://img.shields.io/github/stars/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements?style=flat&label=stars" alt="Stars">
+  <img src="https://img.shields.io/github/license/SyntX34/CS2-SwiftlyS2_SimpleAdvertisements?label=license" alt="License">
 </p>
 
 ## Features
