@@ -1,0 +1,46 @@
+name: Sync Beta to Main
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: sync-beta-to-main
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Beta
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: beta
+
+      - name: 🔀 Sync Beta into Main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Start from the current state of main
+          git checkout -B main origin/main
+
+          if git merge --ff-only beta; then
+            echo "✅ Fast-forwarded main to beta."
+          else
+            echo "⚠️ Beta is not ahead of main, creating a merge commit."
+            git merge beta --no-edit -m "Sync beta into main"
+          fi
+
+          git push origin main
+
+      - name: ✅ Verify Sync
+        run: |
+          git fetch origin
+          echo "origin/main HEAD: $(git rev-parse --short origin/main)"
+          echo "origin/beta  HEAD: $(git rev-parse --short origin/beta)"
+          git log --oneline -3 origin/main
