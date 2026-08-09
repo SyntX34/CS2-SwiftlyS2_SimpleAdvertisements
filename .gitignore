@@ -9,6 +9,7 @@ build/
 *.sln.docstates
 .idea/
 *.dll
+!libs/*.dll
 *.exe
 *.pdb
 *.obj
