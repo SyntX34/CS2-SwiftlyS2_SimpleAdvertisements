@@ -32,14 +32,14 @@ public class Advertisement
   public string? CenterHtml { get; set; }
   public int? Duration { get; set; }
   public List<string>? Permissions { get; set; }
-  public string? TriggerAd { get; set; }
+  public List<string>? TriggerAds { get; set; }
   public string PlayerFilter { get; set; } = "all";
   public string Phase { get; set; } = "any";
 }
 
 [PluginMetadata(
   Id = "SimpleAdvertisement",
-  Version = "1.2.0",
+  Version = "1.2.1",
   Name = "SimpleAdvertisement",
   Author = "SyntX34",
   Description = "A simple advertisements plugin for SwiftlyS2 CS2 servers."
@@ -58,8 +58,8 @@ public partial class SimpleAdvertisement : BasePlugin
     "      \"chat\": \"{green}Welcome to our server!{white} Check the rules and have fun.\",\n" +
     "      // permissions: optional flag(s). Send only to players holding one of them (e.g. from addons/swiftly/configs/permissions.jsonc).\n" +
     "      // \"permissions\": \"vip\",\n" +
-    "      // triggerad: optional command players can run (e.g. !buyvip) to view this ad on demand.\n" +
-    "      // \"triggerad\": \"buyvip\",\n" +
+    "      // triggerad: optional command(s) players can run (e.g. !buyvip) to view this ad on demand (string or array).\n" +
+    "      // \"triggerad\": [\"buyvip\", \"vip\"],\n" +
     "      // playerfilter: all | alive | dead | spectators | players (players = not spectating).\n" +
     "      // \"playerfilter\": \"all\",\n" +
     "      // phase: any | warmup | live (live = not warmup).\n" +
@@ -72,20 +72,29 @@ public partial class SimpleAdvertisement : BasePlugin
     "  }\n" +
     "}\n";
 
-  private static readonly Dictionary<string, string> ColorCodes = new()
+  private static readonly Dictionary<string, string> ColorCodes = new(StringComparer.OrdinalIgnoreCase)
   {
-    { "green", "\x04" },
-    { "red", "\x0F" },
-    { "blue", "\x0B" },
-    { "yellow", "\x0D" },
-    { "purple", "\x03" },
-    { "white", "\x01" },
     { "default", "\x01" },
-    { "grey", "\x09" },
-    { "orange", "\x08" },
-    { "olive", "\x07" },
-    { "lightyellow", "\x05" },
+    { "white", "\x01" },
     { "darkred", "\x02" },
+    { "purple", "\x03" },
+    { "green", "\x04" },
+    { "lightyellow", "\x05" },
+    { "lightgreen", "\x05" },
+    { "lime", "\x06" },
+    { "red", "\x07" },
+    { "grey", "\x08" },
+    { "gray", "\x08" },
+    { "yellow", "\x09" },
+    { "gold", "\x10" },
+    { "silver", "\x0A" },
+    { "blue", "\x0B" },
+    { "darkblue", "\x0C" },
+    { "bluegrey", "\x0A" },
+    { "magenta", "\x0E" },
+    { "lightred", "\x0F" },
+    { "orange", "\x10" },
+    { "olive", "\x06" },
   };
 
   private PluginConfig _config = new();
@@ -113,14 +122,14 @@ public partial class SimpleAdvertisement : BasePlugin
   {
     _config = LoadConfig();
     Core.Event.OnMapLoad += OnMapLoad;
-    Core.Event.OnClientConnected += OnClientConnected;
+    Core.Event.OnClientPutInServer += OnClientPutInServer;
     StartAdvertisements();
   }
 
   public override void Unload()
   {
     Core.Event.OnMapLoad -= OnMapLoad;
-    Core.Event.OnClientConnected -= OnClientConnected;
+    Core.Event.OnClientPutInServer -= OnClientPutInServer;
     CancelWelcomeTimers();
     UnregisterTriggerCommands();
     StopAdvertisements();
@@ -131,7 +140,7 @@ public partial class SimpleAdvertisement : BasePlugin
     if (_config.ReloadOnMapChange) StartAdvertisements();
   }
 
-  private void OnClientConnected(IOnClientConnectedEvent @event)
+  private void OnClientPutInServer(IOnClientPutInServerEvent @event)
   {
     if (!_config.WelcomeEnabled) return;
 
@@ -239,28 +248,26 @@ public partial class SimpleAdvertisement : BasePlugin
       Chat = chat,
       CenterHtml = centerHtml,
       Duration = int.TryParse(section["duration"], out var duration) ? duration : null,
-      Permissions = ParsePermissions(section.GetSection("permissions")),
-      TriggerAd = string.IsNullOrWhiteSpace(section["triggerad"]) ? null : section["triggerad"]!.Trim(),
+      Permissions = ParseList(section.GetSection("permissions")),
+      TriggerAds = ParseList(section.GetSection("triggerad")),
       PlayerFilter = NormalizeValue(section["playerfilter"], "all", ["all", "alive", "dead", "spectators", "players"]),
       Phase = NormalizeValue(section["phase"], "any", ["any", "warmup", "live"]),
     };
   }
 
-  private static List<string>? ParsePermissions(IConfigurationSection section)
+  private static List<string>? ParseList(IConfigurationSection section)
   {
     var list = new List<string>();
     var children = section.GetChildren().ToList();
     if (children.Count > 0)
     {
-      // Array form: "permissions": ["vip", "premium"]
       foreach (var child in children)
         if (!string.IsNullOrWhiteSpace(child.Value)) list.Add(child.Value!.Trim());
     }
     else if (!string.IsNullOrWhiteSpace(section.Value))
     {
-      // String form: "permissions": "vip" or "permissions": "vip, premium"
-      foreach (var permission in section.Value!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        list.Add(permission);
+      foreach (var item in section.Value!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        list.Add(item);
     }
     return list.Count == 0 ? null : list;
   }
@@ -414,15 +421,19 @@ public partial class SimpleAdvertisement : BasePlugin
   {
     foreach (var rule in _rules)
     {
-      if (string.IsNullOrWhiteSpace(rule.TriggerAd)) continue;
-      var name = rule.TriggerAd.Trim();
-      if (_triggerCommands.ContainsKey(name)) continue;
-      try {
-        var guid = Core.Command.RegisterCommand(name, context => TriggerAdCommand(name, context),
-          registerRaw: true, permission: "", helpText: $"Shows the advertisement '{name}'.");
-        _triggerCommands[name] = guid;
-      } catch (Exception ex) {
-        Core.Logger.LogWarning("SimpleAdvertisement: failed to register trigger command '{Name}': {Error}", name, ex.Message);
+      if (rule.TriggerAds == null || rule.TriggerAds.Count == 0) continue;
+      foreach (var rawName in rule.TriggerAds)
+      {
+        if (string.IsNullOrWhiteSpace(rawName)) continue;
+        var name = rawName.Trim();
+        if (_triggerCommands.ContainsKey(name)) continue;
+        try {
+          var guid = Core.Command.RegisterCommand(name, context => TriggerAdCommand(name, context),
+            registerRaw: true, permission: "", helpText: $"Shows the advertisement '{name}'.");
+          _triggerCommands[name] = guid;
+        } catch (Exception ex) {
+          Core.Logger.LogWarning("SimpleAdvertisement: failed to register trigger command '{Name}': {Error}", name, ex.Message);
+        }
       }
     }
   }
@@ -437,7 +448,7 @@ public partial class SimpleAdvertisement : BasePlugin
   {
     if (!context.IsSentByPlayer || context.Sender == null) return;
 
-    var rule = _rules.FirstOrDefault(r => string.Equals(r.TriggerAd, name, StringComparison.OrdinalIgnoreCase));
+    var rule = _rules.FirstOrDefault(r => r.TriggerAds != null && r.TriggerAds.Any(t => string.Equals(t, name, StringComparison.OrdinalIgnoreCase)));
     if (rule == null)
     {
       context.Reply("Unknown advertisement.");
@@ -478,7 +489,10 @@ public partial class SimpleAdvertisement : BasePlugin
   private static string ApplyColors(string message)
   {
     foreach (var code in ColorCodes)
-      message = message.Replace("{" + code.Key + "}", code.Value);
+    {
+      message = message.Replace("{" + code.Key + "}", code.Value, StringComparison.OrdinalIgnoreCase);
+      message = message.Replace("[" + code.Key + "]", code.Value, StringComparison.OrdinalIgnoreCase);
+    }
     return message;
   }
 }

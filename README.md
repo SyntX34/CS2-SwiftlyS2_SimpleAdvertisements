@@ -103,7 +103,7 @@ The advertisements file is stored at `addons/swiftly/configs/plugins/SimpleAdver
 - `centerhtml` - an HTML message displayed in the center of the screen. Color tags are not supported here.
 - `duration` - optional display time in milliseconds for `centerhtml` rules, defaults to 10000.
 - `permissions` - optional. Restricts the ad to players holding at least one of the given flags. Accepts a single string (`"vip"`), a comma separated string (`"vip, premium"`) or an array (`["vip", "premium"]`). Flags are defined in `addons/swiftly/configs/permissions.jsonc`. Omit to send to everyone.
-- `triggerad` - optional. Registers a chat command that lets players view this announcement on demand, e.g. `"triggerad": "buyvip"` lets players type `!buyvip` (or `/buyvip`) to see the ad. The rule's `permissions`, `playerfilter` and `phase` conditions still apply.
+- `triggerad` - optional. Registers chat command(s) that let players view this announcement on demand, e.g. `"triggerad": "buyvip"` or `"triggerad": ["buyvip", "comprarvip", "vip"]` lets players type `!buyvip`, `!comprarvip`, or `!vip` (or with `/`) to see the ad. The response is sent privately only to the player who executed the command. The rule's `permissions`, `playerfilter` and `phase` conditions still apply.
 - `playerfilter` - optional. Restricts which players see the ad:
   - `"all"` (default) - everyone.
   - `"alive"` - only alive players.
@@ -133,20 +133,29 @@ See the [PlaceholderAPI README](https://github.com/SwiftlyS2-Plugins/Placeholder
 ## Commands
 
 - `sw_reloadadvertisement` - reloads `advertisements.jsonc` (and re-registers trigger commands) and restarts the advertisement loop. Requires the `z` (root) flag in `addons/swiftly/configs/permissions.jsonc`. Can also be executed from the server console.
-- `<triggerad>` - every rule with a `triggerad` field gets its own command, e.g. `!buyvip`. No `sw_` prefix is required.
+- `<triggerad>` - every command configured in `triggerad` (e.g. `!buyvip`, `!vip`). No `sw_` prefix is required.
 
 ## Supported Colors
 
-`chat` messages support the following color tags:
+`chat` messages support color tags using both `{color}` and `[color]` formats (case-insensitive):
 
-- `{green}`
-- `{red}`
-- `{blue}`
-- `{yellow}`
-- `{purple}`
-- `{white}`
-
-The SwiftlyS2 framework also supports `{default}`, `{grey}`, `{orange}`, `{olive}`, `{lightyellow}` and `{darkred}`.
+- `{default}` / `[default]`, `{white}` / `[white]`
+- `{darkred}` / `[darkred]`
+- `{purple}` / `[purple]`
+- `{green}` / `[green]`
+- `{lightyellow}` / `[lightyellow]`, `{lightgreen}` / `[lightgreen]`
+- `{lime}` / `[lime]`
+- `{red}` / `[red]`
+- `{grey}` / `[grey]`, `{gray}` / `[gray]`
+- `{yellow}` / `[yellow]`
+- `{gold}` / `[gold]`, `{orange}` / `[orange]`
+- `{silver}` / `[silver]`
+- `{blue}` / `[blue]`
+- `{darkblue}` / `[darkblue]`
+- `{bluegrey}` / `[bluegrey]`
+- `{magenta}` / `[magenta]`
+- `{lightred}` / `[lightred]`
+- `{olive}` / `[olive]`
 
 ## Building
 
