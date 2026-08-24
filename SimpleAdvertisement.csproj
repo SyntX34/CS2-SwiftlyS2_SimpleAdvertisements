@@ -21,6 +21,12 @@
     <PackageReference Include="SwiftlyS2.CS2" Version="*" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="PlaceholderAPI.Contract">
+      <HintPath>libs/PlaceholderAPI.Contract.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <Target Name="CreateZip" AfterTargets="Publish">
     <ItemGroup>
       <PublishFiles Include="$(PublishDir)**\*.*" />
