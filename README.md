@@ -77,7 +77,7 @@ The advertisements file is stored at `addons/swiftly/configs/plugins/SimpleAdver
 {
   "Rules": {
     "1": {
-      "chat": "{green}Buy VIP on www.buyvip.com",
+      "chat": "{green}Buy VIP on donation.novazombie.com",
       "permissions": "vip",
       "triggerad": ["buyvip", "vip"]
     },

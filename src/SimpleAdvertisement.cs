@@ -60,8 +60,8 @@ public partial class SimpleAdvertisement : BasePlugin
     "      \"chat\": \"{green}Welcome to our server!{white} Check the rules and have fun.\",\n" +
     "      // permissions: optional flag(s). Send only to players holding one of them (e.g. from addons/swiftly/configs/permissions.jsonc).\n" +
     "      // \"permissions\": \"vip\",\n" +
-    "      // triggerad: optional command(s) players can run (e.g. !buyvip) to view this ad on demand (string or array).\n" +
-    "      // \"triggerad\": [\"buyvip\", \"vip\"],\n" +
+    "      // triggerad: optional command(s) players can run (e.g. !vip) to view this ad on demand (string or array).\n" +
+    "      // \"triggerad\": [\"vip\", \"donation\"],\n" +
     "      // playerfilter: all | alive | dead | spectators | players (players = not spectating).\n" +
     "      // \"playerfilter\": \"all\",\n" +
     "      // phase: any | warmup | live (live = not warmup).\n" +
