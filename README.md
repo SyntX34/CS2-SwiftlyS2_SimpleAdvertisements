@@ -112,8 +112,9 @@ The advertisements file is stored at `addons/swiftly/configs/plugins/SimpleAdver
 - `message` - a dictionary of localized messages per language code (e.g. `"en"`, `"pt-BR"`, `"de"`, etc.). The plugin automatically matches each player's game language (or falls back to `"en"` / the first available translation).
 - `displaytype` (or `type`) - how the `message` should be displayed: `"chat"` or `"centerhtml"`.
 - `duration` - optional display time in milliseconds for center HTML rules, defaults to 10000.
-- `permissions` - optional. Restricts the ad to players holding at least one of the given flags. Accepts a single string (`"vip"`), a comma separated string (`"vip, premium"`) or an array (`["vip", "premium"]`). Flags are defined in `addons/swiftly/configs/permissions.jsonc`. Omit to send to everyone.
-- `triggerad` - optional. Registers chat command(s) that let players view this announcement on demand, e.g. `"triggerad": "buyvip"` or `"triggerad": ["buyvip", "comprarvip", "vip"]` lets players type `!buyvip`, `!comprarvip`, or `!vip` (or with `/`) to see the ad. The response is sent privately only to the player who executed the command. The rule's `permissions`, `playerfilter` and `phase` conditions still apply.
+- `permissions` - optional. Restricts the ad to players holding at least one of the given view flags (e.g. `"vip"`, `"vip, premium"` or `["vip", "premium"]`). Flags are defined in `addons/swiftly/configs/permissions.jsonc`. Omit to allow everyone.
+- `permissions_exclude` (or `exclude_permissions`) - optional. Hides the ad from players holding any of the specified flags (e.g. `"vip"`, `["vip", "premium"]`). Useful for hiding VIP purchase reminders from existing VIPs or admins.
+- `triggerad` - optional. Registers chat command(s) that let players view this announcement on demand, e.g. `"triggerad": "buyvip"` or `"triggerad": ["buyvip", "comprarvip", "vip"]` lets players type `!buyvip`, `!comprarvip`, or `!vip` (or with `/`) to see the ad. The response is sent privately only to the player who executed the command. The rule's `permissions`, `permissions_exclude`, `playerfilter` and `phase` conditions still apply.
 - `playerfilter` - optional. Restricts which players see the ad:
   - `"all"` (default) - everyone.
   - `"alive"` - only alive players.

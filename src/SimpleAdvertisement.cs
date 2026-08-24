@@ -34,6 +34,7 @@ public class Advertisement
   public string? DisplayType { get; set; }
   public int? Duration { get; set; }
   public List<string>? Permissions { get; set; }
+  public List<string>? PermissionsExclude { get; set; }
   public List<string>? TriggerAds { get; set; }
   public string PlayerFilter { get; set; } = "all";
   public string Phase { get; set; } = "any";
@@ -58,8 +59,10 @@ public partial class SimpleAdvertisement : BasePlugin
     "  \"Rules\": {\n" +
     "    \"1\": {\n" +
     "      \"chat\": \"{green}Welcome to our server!{white} Check the rules and have fun.\",\n" +
-    "      // permissions: optional flag(s). Send only to players holding one of them (e.g. from addons/swiftly/configs/permissions.jsonc).\n" +
+    "      // permissions: optional flag(s) to view the ad (e.g. from addons/swiftly/configs/permissions.jsonc).\n" +
     "      // \"permissions\": \"vip\",\n" +
+    "      // permissions_exclude / exclude_permissions: optional flag(s) to hide the ad from specific groups.\n" +
+    "      // \"permissions_exclude\": \"vip\",\n" +
     "      // triggerad: optional command(s) players can run (e.g. !vip) to view this ad on demand (string or array).\n" +
     "      // \"triggerad\": [\"vip\", \"donation\"],\n" +
     "      // playerfilter: all | alive | dead | spectators | players (players = not spectating).\n" +
@@ -261,6 +264,9 @@ public partial class SimpleAdvertisement : BasePlugin
       DisplayType = displayType,
       Duration = int.TryParse(section["duration"], out var duration) ? duration : null,
       Permissions = ParseList(section.GetSection("permissions")),
+      PermissionsExclude = ParseList(section.GetSection("permissions_exclude")) ??
+                           ParseList(section.GetSection("exclude_permissions")) ??
+                           ParseList(section.GetSection("exclude_flags")),
       TriggerAds = ParseList(section.GetSection("triggerad")),
       PlayerFilter = NormalizeValue(section["playerfilter"], "all", ["all", "alive", "dead", "spectators", "players"]) ?? "all",
       Phase = NormalizeValue(section["phase"], "any", ["any", "warmup", "live"]) ?? "any",
@@ -381,6 +387,7 @@ public partial class SimpleAdvertisement : BasePlugin
   private bool MeetsPlayerConditions(Advertisement rule, IPlayer player, HashSet<ulong>? spectators)
   {
     if (rule.Permissions is { Count: > 0 } && !HasAnyPermission(player, rule.Permissions)) return false;
+    if (rule.PermissionsExclude is { Count: > 0 } && HasAnyPermission(player, rule.PermissionsExclude)) return false;
 
     switch (rule.PlayerFilter)
     {
