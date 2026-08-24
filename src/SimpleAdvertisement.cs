@@ -30,6 +30,8 @@ public class Advertisement
 {
   public string? Chat { get; set; }
   public string? CenterHtml { get; set; }
+  public Dictionary<string, string>? Messages { get; set; }
+  public string? DisplayType { get; set; }
   public int? Duration { get; set; }
   public List<string>? Permissions { get; set; }
   public List<string>? TriggerAds { get; set; }
@@ -39,7 +41,7 @@ public class Advertisement
 
 [PluginMetadata(
   Id = "SimpleAdvertisement",
-  Version = "1.2.1",
+  Version = "1.3.1",
   Name = "SimpleAdvertisement",
   Author = "SyntX34",
   Description = "A simple advertisements plugin for SwiftlyS2 CS2 servers."
@@ -66,7 +68,11 @@ public partial class SimpleAdvertisement : BasePlugin
     "      // \"phase\": \"any\"\n" +
     "    },\n" +
     "    \"2\": {\n" +
-    "      \"centerhtml\": \"<font color='#FFD700'>Follow us on social media!</font>\",\n" +
+    "      \"message\": {\n" +
+    "        \"en\": \"<font color='#FFD700'>Follow us on social media!</font>\",\n" +
+    "        \"pt-BR\": \"<font color='#FFD700'>Siga-nos nas redes sociais!</font>\"\n" +
+    "      },\n" +
+    "      \"displaytype\": \"centerhtml\",\n" +
     "      \"duration\": 10000\n" +
     "    }\n" +
     "  }\n" +
@@ -241,18 +247,35 @@ public partial class SimpleAdvertisement : BasePlugin
   {
     var chat = section["chat"];
     var centerHtml = section["centerhtml"];
-    if (string.IsNullOrWhiteSpace(chat) && string.IsNullOrWhiteSpace(centerHtml)) return null;
+    var messages = ParseMessages(section.GetSection("message"));
+    var displayType = NormalizeValue(section["displaytype"] ?? section["type"], null, ["chat", "centerhtml"]);
+
+    if (string.IsNullOrWhiteSpace(chat) && string.IsNullOrWhiteSpace(centerHtml) && (messages == null || messages.Count == 0))
+      return null;
 
     return new Advertisement
     {
       Chat = chat,
       CenterHtml = centerHtml,
+      Messages = messages,
+      DisplayType = displayType,
       Duration = int.TryParse(section["duration"], out var duration) ? duration : null,
       Permissions = ParseList(section.GetSection("permissions")),
       TriggerAds = ParseList(section.GetSection("triggerad")),
-      PlayerFilter = NormalizeValue(section["playerfilter"], "all", ["all", "alive", "dead", "spectators", "players"]),
-      Phase = NormalizeValue(section["phase"], "any", ["any", "warmup", "live"]),
+      PlayerFilter = NormalizeValue(section["playerfilter"], "all", ["all", "alive", "dead", "spectators", "players"]) ?? "all",
+      Phase = NormalizeValue(section["phase"], "any", ["any", "warmup", "live"]) ?? "any",
     };
+  }
+
+  private static Dictionary<string, string>? ParseMessages(IConfigurationSection section)
+  {
+    var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var child in section.GetChildren())
+    {
+      if (!string.IsNullOrWhiteSpace(child.Value))
+        dict[child.Key] = child.Value!;
+    }
+    return dict.Count == 0 ? null : dict;
   }
 
   private static List<string>? ParseList(IConfigurationSection section)
@@ -272,7 +295,7 @@ public partial class SimpleAdvertisement : BasePlugin
     return list.Count == 0 ? null : list;
   }
 
-  private static string NormalizeValue(string? value, string fallback, string[] allowed)
+  private static string? NormalizeValue(string? value, string? fallback, string[] allowed)
   {
     if (!string.IsNullOrWhiteSpace(value))
     {
@@ -305,13 +328,47 @@ public partial class SimpleAdvertisement : BasePlugin
   private void SendToPlayer(Advertisement rule, IPlayer player)
   {
     try {
-      if (!string.IsNullOrWhiteSpace(rule.Chat))
-        player.SendChatAsync(ProcessPlaceholders(player, ApplyColors(rule.Chat)));
+      var isCenter = string.Equals(rule.DisplayType, "centerhtml", StringComparison.OrdinalIgnoreCase) ||
+                     (!string.IsNullOrWhiteSpace(rule.CenterHtml) && string.IsNullOrWhiteSpace(rule.Chat));
+
+      string? rawMsg = null;
+      if (rule.Messages is { Count: > 0 })
+        rawMsg = ResolveLanguageMessage(rule.Messages, player);
+      else if (!string.IsNullOrWhiteSpace(rule.Chat) && !isCenter)
+        rawMsg = rule.Chat;
       else if (!string.IsNullOrWhiteSpace(rule.CenterHtml))
-        player.SendCenterHTMLAsync(ProcessPlaceholders(player, rule.CenterHtml), rule.Duration ?? DefaultCenterHtmlDuration);
+        rawMsg = rule.CenterHtml;
+      else if (!string.IsNullOrWhiteSpace(rule.Chat))
+        rawMsg = rule.Chat;
+
+      if (string.IsNullOrWhiteSpace(rawMsg)) return;
+
+      if (isCenter)
+        player.SendCenterHTMLAsync(ProcessPlaceholders(player, rawMsg), rule.Duration ?? DefaultCenterHtmlDuration);
+      else
+        player.SendChatAsync(ProcessPlaceholders(player, ApplyColors(rawMsg)));
     } catch (Exception ex) {
       Core.Logger.LogWarning("SimpleAdvertisement: failed to send advertisement: {Error}", ex.Message);
     }
+  }
+
+  private static string? ResolveLanguageMessage(Dictionary<string, string> messages, IPlayer player)
+  {
+    var lang = player.PlayerLanguage.ToString();
+    if (!string.IsNullOrWhiteSpace(lang))
+    {
+      if (messages.TryGetValue(lang, out var exact)) return exact;
+      var prefix = lang.Split('-')[0].Split('_')[0];
+      var partial = messages.FirstOrDefault(kvp =>
+      {
+        var keyPrefix = kvp.Key.Split('-')[0].Split('_')[0];
+        return string.Equals(keyPrefix, prefix, StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(kvp.Key, lang, StringComparison.OrdinalIgnoreCase);
+      });
+      if (!string.IsNullOrEmpty(partial.Value)) return partial.Value;
+    }
+    if (messages.TryGetValue("en", out var en)) return en;
+    return messages.Values.FirstOrDefault();
   }
 
   private bool MeetsPhase(Advertisement rule)

@@ -15,6 +15,7 @@
 
 - Colored chat advertisements
 - Center HTML advertisements
+- **Multi-language support** - send localized messages per player based on their client language (`"message": { "en": "...", "pt-BR": "..." }`) with configurable `displaytype` (`"chat"` or `"centerhtml"`)
 - Configurable advertisement interval
 - Optional advertisement reload on map change
 - Admin command to reload advertisements on demand
@@ -78,14 +79,21 @@ The advertisements file is stored at `addons/swiftly/configs/plugins/SimpleAdver
     "1": {
       "chat": "{green}Buy VIP on www.buyvip.com",
       "permissions": "vip",
-      "triggerad": "buyvip"
+      "triggerad": ["buyvip", "vip"]
     },
     "2": {
-      "chat": "{green}Buy SKINS on www.buyskins.com",
-      "triggerad": "buyskins"
+      "message": {
+        "en": "{green}Welcome to our server!",
+        "pt-BR": "{green}Bem-vindo ao nosso servidor!"
+      },
+      "displaytype": "chat"
     },
     "3": {
-      "centerhtml": "<font color='#FFD700'>GG WP!</font>",
+      "message": {
+        "en": "<font color='#FFD700'>Follow us on social media!</font>",
+        "pt-BR": "<font color='#FFD700'>Siga-nos nas redes sociais!</font>"
+      },
+      "displaytype": "centerhtml",
       "permissions": ["vip", "premium"],
       "duration": 8000,
       "playerfilter": "dead",
@@ -99,9 +107,11 @@ The advertisements file is stored at `addons/swiftly/configs/plugins/SimpleAdver
 }
 ```
 
-- `chat` - a colored chat message sent to all players.
-- `centerhtml` - an HTML message displayed in the center of the screen. Color tags are not supported here.
-- `duration` - optional display time in milliseconds for `centerhtml` rules, defaults to 10000.
+- `chat` - a colored chat message sent to players (single language format).
+- `centerhtml` - an HTML message displayed in the center of the screen (single language format). Color tags are not supported here.
+- `message` - a dictionary of localized messages per language code (e.g. `"en"`, `"pt-BR"`, `"de"`, etc.). The plugin automatically matches each player's game language (or falls back to `"en"` / the first available translation).
+- `displaytype` (or `type`) - how the `message` should be displayed: `"chat"` or `"centerhtml"`.
+- `duration` - optional display time in milliseconds for center HTML rules, defaults to 10000.
 - `permissions` - optional. Restricts the ad to players holding at least one of the given flags. Accepts a single string (`"vip"`), a comma separated string (`"vip, premium"`) or an array (`["vip", "premium"]`). Flags are defined in `addons/swiftly/configs/permissions.jsonc`. Omit to send to everyone.
 - `triggerad` - optional. Registers chat command(s) that let players view this announcement on demand, e.g. `"triggerad": "buyvip"` or `"triggerad": ["buyvip", "comprarvip", "vip"]` lets players type `!buyvip`, `!comprarvip`, or `!vip` (or with `/`) to see the ad. The response is sent privately only to the player who executed the command. The rule's `permissions`, `playerfilter` and `phase` conditions still apply.
 - `playerfilter` - optional. Restricts which players see the ad:
